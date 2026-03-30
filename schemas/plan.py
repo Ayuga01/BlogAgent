@@ -10,5 +10,5 @@ class Task(BaseModel):
     brief: str = Field(..., description="What to cover in the task")
 
 class Plan(BaseModel):
-    research_title: str
+    blog_title: str
     tasks: List[Task]
