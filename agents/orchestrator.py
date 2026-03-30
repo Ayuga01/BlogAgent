@@ -1,8 +1,10 @@
 from workflow.settings import llm_planner
+from langsmith import traceable
 from schemas.state import State
 from schemas.plan import Plan
 from langchain_core.messages import SystemMessage, HumanMessage
 
+@traceable(name="orchestrator")
 def orchestrator(state: State) -> dict:
 
     planner_llm = llm_planner.with_structured_output(Plan)

@@ -1,6 +1,9 @@
 from pathlib import Path
+from langsmith import traceable
 from schemas.state import State
 
+
+@traceable(name="reducer")
 def reducer(state: State) ->dict:
 
     title = state["plan"].blog_title
