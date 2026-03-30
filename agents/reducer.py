@@ -1,23 +1,25 @@
 from pathlib import Path
 from langsmith import traceable
+from schemas import plan, state
 from schemas.state import State
 
 
 @traceable(name="reducer")
 def reducer(state: State) ->dict:
 
-    title = state["plan"].blog_title
-    body = "\n\n".join(state["sections"]).strip()
 
-    final_md = f"# {title}\n\n{body}\n"
+    plan = state["plan"]
 
-    filename = "".join(c if c.isalnum() or c in (" ", "_", "-") else "" for c in title)
-    filename = filename.strip().lower().replace(" ", "_")+".md"
-    
+    ordered_sections = [md for _, md in sorted(state["sections"], key=lambda x: x[0])]
+    body = "\n\n".join(ordered_sections).strip()
+    final_md = f"# {plan.blog_title}\n\n{body}\n"
+
+    file_name = f"{plan.blog_title}.md"
+
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True) 
 
-    output_path = output_dir / filename
+    output_path = output_dir / file_name
 
     output_path.write_text(final_md, encoding="utf-8")
 

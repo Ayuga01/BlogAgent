@@ -3,6 +3,7 @@ langchain-core
 langchain-community
 langchain-groq
 langchain-google-genai
+langchain-openai    
 langchain-tavily
 langgraph
 python-dotenv
