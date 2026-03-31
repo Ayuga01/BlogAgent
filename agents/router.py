@@ -31,14 +31,22 @@ def router_node(state: State) -> dict:
     decision = decider.invoke(
         [
             SystemMessage(content=ROUTER_PROMPT),
-            HumanMessage(content=f"Topic: {topic}")
+            HumanMessage(content=f"Topic: {topic}\nAs_of date: {state['as_of']}")
         ]
     )
+
+    if decision.mode == "open_book":
+        recency_days = 7
+    elif decision.mode == "hybrid":
+        recency_days = 45
+    else:
+        recency_days = 3650
 
     return {
         "needs_research": decision.needs_research,
         "mode": decision.mode,
-        "queries": decision.queries
+        "queries": decision.queries,
+        "recency_days": recency_days
     }
 
 @traceable(name="router_decision")

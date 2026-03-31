@@ -5,4 +5,6 @@ from typing import List, Annotated, Literal
 class RouterDecision(BaseModel):
     needs_research: bool
     mode: Literal["closed_book", "open_book", "hybrid"]
+    reason: str
     queries: List[str] = Field(default_factory=list)
+    max_results_per_query: int = Field(5)

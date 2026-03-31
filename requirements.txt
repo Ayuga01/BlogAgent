@@ -7,3 +7,4 @@ langchain-openai
 langchain-tavily
 langgraph
 python-dotenv
+google-genai

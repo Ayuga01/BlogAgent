@@ -14,3 +14,4 @@ wheels/
 
 # Markdown output
 output/*.md
+output/images/*.png

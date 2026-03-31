@@ -1,4 +1,4 @@
-from workflow.settings import llm_planner
+from workflow.settings import llm_orchestrator
 from langsmith import traceable
 from schemas.state import State
 from schemas.plan import Plan
@@ -6,47 +6,32 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 
 ORCHESTRATOR_PROMPT = """You are a senior technical writer and developer advocate.
-                        Your job is to produce a highly actionable outline for a technical blog post.
+                            Produce a highly actionable outline for a technical blog post.
 
-                        Hard requirements:
-                        - Create 5–9 sections (tasks) suitable for the topic and audience.
-                        - Each task must include:
-                        1) goal (1 sentence)
-                        2) 3–6 bullets that are concrete, specific, and non-overlapping
-                        3) target word count (120–550)
+                            Requirements:
+                            - 5–9 tasks, each with goal + 3–6 bullets + target_words.
+                            - Tags are flexible; do not force a fixed taxonomy.
 
-                        Quality bar:
-                        - Assume the reader is a developer; use correct terminology.
-                        - Bullets must be actionable: build/compare/measure/verify/debug.
-                        - Ensure the overall plan includes at least 2 of these somewhere:
-                        * minimal code sketch / MWE (set requires_code=True for that section)
-                        * edge cases / failure modes
-                        * performance/cost considerations
-                        * security/privacy considerations (if relevant)
-                        * debugging/observability tips
+                            Grounding:
+                            - closed_book: evergreen, no evidence dependence.
+                            - hybrid: use evidence for up-to-date examples; mark those tasks requires_research=True and requires_citations=True.
+                            - open_book: weekly/news roundup:
+                            - Set blog_kind="news_roundup"
+                            - No tutorial content unless requested
+                            - If evidence is weak, plan should explicitly reflect that (don’t invent events).
 
-                        Grounding rules:
-                        - Mode closed_book: keep it evergreen; do not depend on evidence.
-                        - Mode hybrid:
-                        - Use evidence for up-to-date examples (models/tools/releases) in bullets.
-                        - Mark sections using fresh info as requires_research=True and requires_citations=True.
-                        - Mode open_book:
-                        - Set blog_kind = "news_roundup".
-                        - Every section is about summarizing events + implications.
-                        - DO NOT include tutorial/how-to sections unless user explicitly asked for that.
-                        - If evidence is empty or insufficient, create a plan that transparently says "insufficient sources"
-                            and includes only what can be supported.
-
-                        Output must strictly match the Plan schema.
-                        """
+                            Output must match Plan schema.
+                            """
 
 @traceable(name="orchestrator")
 def orchestrator(state: State) -> dict:
 
-    planner_llm = llm_planner.with_structured_output(Plan)
+    planner_llm = llm_orchestrator.with_structured_output(Plan)
 
     evidence = state.get("evidence", [])
     mode = state.get("mode", "closed_book")
+
+    forced_kind = "news_roundup" if mode == "open_book" else None
 
     plan = planner_llm.invoke(
         [
@@ -55,11 +40,15 @@ def orchestrator(state: State) -> dict:
                 content=(
                     f"Topic: {state['topic']}\n"
                     f"Mode: {mode}\n"
-                    f"Evidence (if any):\n"
-                    f"{[e.model_dump() for e in evidence][::16]}"
+                    f"As-of: {state['as_of']}(recency_days: {state['recency_days']})\n"
+                    f"{'Force blog_kind=news_roundup' if forced_kind else ''}\n\n"
+                    f"Evidence (if any):\n{[e.model_dump() for e in evidence][::16]}"
                 )
             ),
         ]
     )
+
+    if forced_kind:
+        plan.blog_kind = "news_roundup"
 
     return {"plan": plan}

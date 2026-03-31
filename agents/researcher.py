@@ -2,9 +2,20 @@ from workflow.settings import llm_researcher
 from schemas.state import State
 from schemas.plan import Plan
 from tools.tavily import tavily_search
-from schemas.evidence import EvidencePack
+from schemas.evidence import EvidencePack, EvidenceItem
 from langsmith import traceable
 from langchain_core.messages import SystemMessage, HumanMessage
+from typing import Optional, List
+from datetime import date, timedelta
+
+def _iso_to_date(s: Optional[str]) -> Optional[date]:
+    if not s:
+        return None
+    try:
+        return date.fromisoformat(s[:10])
+    except Exception:
+        return None
+
 
 RESEARCH_PROMPT = """You are a research synthesizer for technical writing.
 
@@ -23,10 +34,10 @@ Rules:
 @traceable(name="researcher")
 def research_node(state: State) -> dict:
 
-    queries = (state.get("queries", []) or [])
+    queries = (state.get("queries", []) or [])[:10]
     max_results = 6
 
-    raw_results: list[dict] = []
+    raw_results: List[dict] = []
 
     for q in queries:
         raw_results.extend(tavily_search(q, max_results=max_results))
@@ -39,7 +50,13 @@ def research_node(state: State) -> dict:
     pack = extractor.invoke(
         [
             SystemMessage(content=RESEARCH_PROMPT),
-            HumanMessage(content=f"Raw search results:\n{raw_results}")
+            HumanMessage(
+                content=(
+                    f"As_of date: {state['as_of']}\n"
+                    f"Recency days: {state['recency_days']}\n\n"
+                    f"Raw search results:\n{raw_results}"
+                )
+            ),
         ]
     )
 
@@ -50,4 +67,11 @@ def research_node(state: State) -> dict:
         if e.url:
             seen_urls[e.url] = e
 
-    return {"evidence": list(seen_urls.values())}
+    evidence = list(seen_urls.values())
+
+    if state.get("mode") == "open_book":
+        as_of = date.fromisoformat(state["as_of"])
+        cutoff = as_of - timedelta(days=int(state["recency_days"]))
+        evidence = [e for e in evidence if (d := _iso_to_date(e.published_at)) and d >= cutoff]
+
+    return {"evidence": evidence}

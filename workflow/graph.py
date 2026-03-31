@@ -1,9 +1,9 @@
 from langgraph.graph import StateGraph, START, END
 from agents.orchestrator import orchestrator
 from agents.worker import worker, fanout
-from agents.reducer import reducer
 from agents.router import router_node, route_next
 from agents.researcher import research_node
+from workflow.reducer_subgraph import reducer
 from schemas.state import State
 
 builder = StateGraph(State)
