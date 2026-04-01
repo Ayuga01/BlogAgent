@@ -30,7 +30,7 @@ IMAGE_DECISION_PROMPT = """ You are an expert technical editor.
                             Decide if images/diagrams are needed for THIS blog.
 
                             Rules:
-                            - Max 3 images total.
+                            - Max 1 images total.
                             - Each image must materially improve understanding (diagram/flow/table-like visual).
                             - Insert placeholders exactly: [[IMAGE_1]], [[IMAGE_2]], [[IMAGE_3]].
                             - If you insert any placeholder, you must return exactly one matching item in images.

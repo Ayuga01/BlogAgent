@@ -5,7 +5,7 @@ from schemas.evidence import EvidenceItem
 from schemas.plan import Plan
 from langsmith import traceable
 from langgraph.types import Send
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 @traceable(name="fanout")
