@@ -1,5 +1,7 @@
 # BlogAgent
 
+Try the live app: [https://blogagent-01.streamlit.app/](https://blogagent-01.streamlit.app/)
+
 BlogAgent is a LangGraph-based multi-agent workflow for generating technical blog posts with optional web research, citations, and diagram/image insertion.
 
 Instead of using a single prompt to write a full article, the project breaks blog generation into stages:
@@ -133,6 +135,7 @@ BlogAgent/
 │   ├── reducer_subgraph.py
 │   └── settings.py
 ├── output/
+├── blog_gen.py
 ├── main.py
 ├── pyproject.toml
 └── README.md
@@ -200,6 +203,20 @@ Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
 That is a warning, not a failure.
 
 ## Running the Project
+
+### Streamlit App
+
+To run the local web UI:
+
+```bash
+uv run --with streamlit streamlit run blog_gen.py
+```
+
+Or use the hosted version:
+
+- [https://blogagent-01.streamlit.app/](https://blogagent-01.streamlit.app/)
+
+### Script Entry Point
 
 Right now, `main.py` contains a hardcoded topic. To change the blog subject, edit the `topic` field in `main.py`.
 
@@ -417,6 +434,8 @@ If you want to customize behavior, these are the most important places to start:
 ```bash
 uv sync
 # create .env and add your keys
+uv run --with streamlit streamlit run blog_gen.py
+# or run the script version
 uv run main.py
 ```
 
