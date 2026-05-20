@@ -21,5 +21,6 @@ class State(TypedDict):
     merged_md: str
     md_with_placeholders: str
     image_specs: List[dict]
+    skip_images: bool
 
     final: str

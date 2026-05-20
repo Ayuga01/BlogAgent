@@ -187,3 +187,19 @@ def generate_and_place_images(state: State) -> dict:
     output_path.write_text(md, encoding="utf-8")
 
     return {"final": md}
+
+
+@traceable(name="finalize_without_images(reducer)")
+def finalize_without_images(state: State) -> dict:
+    plan = state["plan"]
+    assert plan is not None
+
+    md = state.get("merged_md", "")
+    filename = f"{_safe_markdown_filename(plan.blog_title)}.md"
+    output_dir = Path("output")
+    output_dir.mkdir(exist_ok=True)
+    output_path = output_dir / filename
+
+    output_path.write_text(md, encoding="utf-8")
+    return {"final": md}
+

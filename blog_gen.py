@@ -27,7 +27,7 @@ def safe_markdown_filename(title: str) -> str:
     return s or "blog"
 
 
-def build_inputs(topic: str, as_of: date) -> Dict[str, Any]:
+def build_inputs(topic: str, as_of: date, skip_images: bool = False) -> Dict[str, Any]:
     return {
         "topic": topic.strip(),
         "mode": "",
@@ -41,6 +41,7 @@ def build_inputs(topic: str, as_of: date) -> Dict[str, Any]:
         "merged_md": "",
         "md_with_placeholders": "",
         "image_specs": [],
+        "skip_images": skip_images,
         "final": "",
     }
 
@@ -435,6 +436,7 @@ with st.sidebar:
         placeholder="How RAG Works End-to-End: Query, Retrieval, Re-ranking, and Answer Generation with Diagrams",
     )
     as_of = st.date_input("As-of date", value=date.today())
+    generate_images = st.toggle("Generate Images", value=True, help="Disable to skip image generation and speed up blog creation.")
     run_btn = st.button("Generate Blog", type="primary", use_container_width=True)
 
     st.divider()
@@ -487,7 +489,7 @@ if run_btn:
         st.warning("Please enter a topic.")
         st.stop()
 
-    inputs = build_inputs(topic, as_of)
+    inputs = build_inputs(topic, as_of, skip_images=not generate_images)
     append_log(f"Started generation for topic: {topic}")
     st.session_state["agent_statuses"] = initial_agent_statuses()
     st.session_state["current_action"] = "Starting workflow..."
@@ -497,8 +499,36 @@ if run_btn:
         with st.spinner("Running BlogAgent workflow..."):
             out = stream_blog_run(inputs, status_placeholder)
     except Exception as exc:
+        exc_type = type(exc).__name__
+        exc_str = str(exc).lower()
         append_log(f"Run failed: {exc}")
-        st.exception(exc)
+
+        # Detect common LLM API authentication/key errors
+        api_error_keywords = [
+            "authentication", "auth", "api key", "api_key",
+            "invalid key", "incorrect api key", "permission",
+            "unauthorized", "401", "403", "quota", "rate limit",
+            "billing", "insufficient_quota", "access denied",
+        ]
+        is_api_error = any(kw in exc_str for kw in api_error_keywords)
+
+        if is_api_error:
+            st.error(
+                "Blog generation stopped -- an LLM API call failed.\n\n"
+                "This usually means an API key is missing, invalid, revoked, "
+                "or has exceeded its quota. Please check the following keys "
+                "in your .env file:\n\n"
+                "- OPENAI_API_KEY (used by orchestrator, worker, and reducer agents)\n"
+                "- GEMINI_API_KEY (used by router and researcher agents)\n"
+                "- TAVILY_API_KEY (used for web search)\n\n"
+                f"Error details: {exc}"
+            )
+        else:
+            st.error(
+                "Blog generation stopped due to an unexpected error. "
+                "Please check your API keys and network connection.\n\n"
+                f"Error details: {exc}"
+            )
     else:
         st.session_state["last_out"] = out
         blog_path = expected_output_path(out)
