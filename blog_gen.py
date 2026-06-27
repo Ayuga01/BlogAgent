@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import re
 import zipfile
+from collections.abc import Mapping
 from datetime import date
 from io import BytesIO
 from pathlib import Path
@@ -10,6 +12,47 @@ from typing import Any, Dict, List, Optional, Tuple
 _THIS_DIR = Path(__file__).resolve().parent
 
 import streamlit as st
+
+
+_ENV_SECRET_KEYS = (
+    "OPENAI_API_KEY",
+    "TAVILY_API_KEY",
+    "GOOGLE_API_KEY",
+    "GEMINI_API_KEY",
+    "LANGCHAIN_API_KEY",
+    "LANGCHAIN_ENDPOINT",
+    "LANGCHAIN_PROJECT",
+    "LANGCHAIN_TRACING_V2",
+)
+_COMMON_SECRET_SECTIONS = ("api_keys", "secrets", "general")
+
+
+def _load_streamlit_secrets_into_env() -> None:
+    """
+    Streamlit exposes root-level secrets as environment variables, but secrets
+    inside TOML sections are only available through st.secrets. LangChain and
+    Google SDK clients read os.environ during import, so bridge common layouts
+    before workflow.graph creates those clients.
+    """
+    try:
+        secrets = st.secrets.to_dict()
+    except Exception:
+        return
+
+    sources: list[Mapping[str, Any]] = [secrets]
+    for section in _COMMON_SECRET_SECTIONS:
+        section_values = secrets.get(section)
+        if isinstance(section_values, Mapping):
+            sources.append(section_values)
+
+    for source in sources:
+        for key in _ENV_SECRET_KEYS:
+            value = source.get(key)
+            if value and not os.environ.get(key):
+                os.environ[key] = str(value).strip()
+
+
+_load_streamlit_secrets_into_env()
 
 from workflow.graph import app
 
