@@ -7,6 +7,6 @@ load_dotenv()
 
 llm_orchestrator = ChatOpenAI(model = "gpt-5.4-mini")
 llm_worker = ChatOpenAI(model = "gpt-5.4-mini")
-llm_researcher = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
-llm_router = ChatGoogleGenerativeAI(model = "gemini-3-flash-preview")
+llm_researcher = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+llm_router = ChatGoogleGenerativeAI(model = "gemini-2.5-flash")
 llm_planner = ChatOpenAI(model = "gpt-5.4-mini")
