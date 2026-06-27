@@ -97,7 +97,7 @@ def _gemini_generate_image_bytes(prompt: str) -> bytes:
     client = genai.Client(api_key=api_key)
 
     resp = client.models.generate_content(
-        model="gemini-3.1-flash-image-preview",
+        model="gemini-2.5-flash-image",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_modalities=["IMAGE"],
@@ -202,4 +202,3 @@ def finalize_without_images(state: State) -> dict:
 
     output_path.write_text(md, encoding="utf-8")
     return {"final": md}
-

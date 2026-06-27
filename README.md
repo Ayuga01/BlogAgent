@@ -33,7 +33,7 @@ At the moment, the repo is configured like this:
 
 - `gpt-5.4-mini` for orchestration, section writing, and image planning
 - `gemini-3-flash-preview` for routing and research synthesis
-- `gemini-3.1-flash-image-preview` for image generation
+- `gemini-2.5-flash-image` for image generation
 
 That split matters because setup and failure modes differ by provider.
 
